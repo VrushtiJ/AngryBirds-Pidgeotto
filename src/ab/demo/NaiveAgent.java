@@ -56,7 +56,7 @@ public class NaiveAgent implements Runnable {
 
     //    System.out.println(currentLevel+" currentlevel");
 		aRobot.loadLevel(currentLevel);
-		while (count<8) {
+		while (true) {
 
 			GameState state = solve();
 			if (state == GameState.WON) {
@@ -111,7 +111,7 @@ public class NaiveAgent implements Runnable {
 			}
 
 		}
-        System.out.println("8 levels are completed");
+//        System.out.println("8 levels are completed");
 
 	}
 
@@ -173,20 +173,27 @@ public class NaiveAgent implements Runnable {
 
 		// if there is a sling, then play, otherwise just skip.
 		if (sling != null) {
+           // BlocksDetails bd=new BlocksDetails();
+           // bd.Structure();
+    		if (!pigs.isEmpty()) {
 
-			if (!pigs.isEmpty()) {
-
+                Deciding_Trajectory DT=new Deciding_Trajectory();
+                int flag=DT.Traj();
                 double min=pigs.get(0).getY();
                 int minid=0;
 
       //          System.out.println(pigs.size()+" pig size "+pigs.get(0).getY());
-
-                for(int i=1;i<pigs.size();i++)
+                if(flag==1)
                 {
-                    if(pigs.get(i).getY()<min)
-                    {
-                        min=pigs.get(i).getY();
-                        minid=i;
+                    int mid=pigs.size()+3/4;
+                    minid=mid;
+                }
+                else {
+                    for (int i = 1; i < pigs.size(); i++) {
+                        if (pigs.get(i).getY() < min) {
+                            min = pigs.get(i).getY();
+                            minid = i;
+                        }
                     }
                 }
                 for(int i=0;i<pigs.size();i++) {
@@ -214,13 +221,16 @@ public class NaiveAgent implements Runnable {
 
 					// estimate the trajectory
 					ArrayList<Point> pts = tp.estimateLaunchPoint(sling, _tpt);
-					
+					for(int i=0;i<pts.size();i++)
+                    {
+                        System.out.println( pts.get(i)+" points " +i);
+                    }
 					// do a high shot when entering a level to find an accurate velocity
-					if (pts.size() > 1)
+					if (flag==2 && pts.size()>1)
 					{
 						releasePoint = pts.get(1);
 					}
-					else if (pts.size() == 1)
+					else if (flag==1)
 						releasePoint = pts.get(0);
 				/*	else if (pts.size() == 2)
 					{

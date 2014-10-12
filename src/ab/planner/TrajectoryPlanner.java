@@ -224,7 +224,7 @@ public class TrajectoryPlanner {
             
         
         // add the higher point if it is below 75 degrees and not same as first
-        if (theta2 < Math.toRadians(90) && theta2 != theta1 && bestError < 1000)
+        if (theta2 < Math.toRadians(75) && theta2 != theta1 && bestError < 1000)
             pts.add(findReleasePoint(slingshot, theta2));
         
         return pts;
