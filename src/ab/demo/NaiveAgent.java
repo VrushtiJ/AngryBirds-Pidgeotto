@@ -182,10 +182,12 @@ public class NaiveAgent implements Runnable {
                 double min=pigs.get(0).getY();
                 int minid=0;
 
-      //          System.out.println(pigs.size()+" pig size "+pigs.get(0).getY());
+      //
+      //    System.out.println(pigs.size()+" pig size "+pigs.get(0).getY());
+         // If height of structure is more than width of it then we hitting is done on 3/4 of the pig..!!
                 if(flag==1)
                 {
-                    int mid=pigs.size()+3/4;
+                    int mid=(pigs.size()*3)/4;
                     minid=mid;
                 }
                 else {
@@ -226,11 +228,11 @@ public class NaiveAgent implements Runnable {
                         System.out.println( pts.get(i)+" points " +i);
                     }
 					// do a high shot when entering a level to find an accurate velocity
-					if (flag==2 && pts.size()>1)
+					if (flag==2 && pts.size()>1) //if width is greater than the height of the structure then heighest trajectory will be used
 					{
 						releasePoint = pts.get(1);
 					}
-					else if (flag==1)
+					else if (flag==1)  // if height is greater than the width than lowest trajcetory will be used..!!
 						releasePoint = pts.get(0);
 				/*	else if (pts.size() == 2)
 					{
