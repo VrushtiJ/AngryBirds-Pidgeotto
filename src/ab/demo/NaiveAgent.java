@@ -12,11 +12,14 @@ package ab.demo;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.lang.annotation.Target;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+
 
 import ab.demo.other.ActionRobot;
 import ab.demo.other.Shot;
@@ -24,7 +27,9 @@ import ab.planner.TrajectoryPlanner;
 import ab.utils.StateUtil;
 import ab.vision.ABObject;
 import ab.vision.GameStateExtractor.GameState;
-import ab.vision.Vision;
+import ab.vision.Vision;;
+import ab.vision.ABShape;
+import jdk.nashorn.internal.ir.Block;
 
 public class NaiveAgent implements Runnable {
 
@@ -121,33 +126,32 @@ public class NaiveAgent implements Runnable {
 						* (p1.y - p2.y)));
 	}
 
-	public GameState solve()
-	{
+	public GameState solve() {
 
 
-		// capture Image
-		BufferedImage screenshot = ActionRobot.doScreenShot();
+        // capture Image
+        BufferedImage screenshot = ActionRobot.doScreenShot();
 
-		// process image
-		Vision vision = new Vision(screenshot);
+        // process image
+        Vision vision = new Vision(screenshot);
 
-		// find the slingshot
-		Rectangle sling = vision.findSlingshotMBR();
+        // find the slingshot
+        Rectangle sling = vision.findSlingshotMBR();
 
-		// confirm the slingshot
-		while (sling == null && aRobot.getState() == GameState.PLAYING) {
-			System.out
-			.println("No slingshot detected. Please remove pop up or zoom out");
-			ActionRobot.fullyZoomOut();
-			screenshot = ActionRobot.doScreenShot();
-			vision = new Vision(screenshot);
-			sling = vision.findSlingshotMBR();
-		}
+        // confirm the slingshot
+        while (sling == null && aRobot.getState() == GameState.PLAYING) {
+            System.out
+                    .println("No slingshot detected. Please remove pop up or zoom out");
+            ActionRobot.fullyZoomOut();
+            screenshot = ActionRobot.doScreenShot();
+            vision = new Vision(screenshot);
+            sling = vision.findSlingshotMBR();
+        }
         // get all the pigs
         ABObject p, q, Top_point;
         Point pt;
- 		List<ABObject> pigs = vision.findPigsMBR();
-
+        List<ABObject> pigs = vision.findPigsMBR();
+        List<ABObject> blocks = vision.findBlocksMBR();
 
             /*for(int i=0;i<pigs.size();i++) {
             p=pigs.get(i);
@@ -169,71 +173,88 @@ public class NaiveAgent implements Runnable {
                 }
             }
         }*/
-         GameState state = aRobot.getState();
+        GameState state = aRobot.getState();
 
-		// if there is a sling, then play, otherwise just skip.
-		if (sling != null) {
-           // BlocksDetails bd=new BlocksDetails();
-           // bd.Structure();
-    		if (!pigs.isEmpty()) {
+        // if there is a sling, then play, otherwise just skip.
+        if (sling != null) {
+            BlocksDetails bd = new BlocksDetails();
+            //  bd.Structure();
 
-                Deciding_Trajectory DT=new Deciding_Trajectory();
-                int flag=DT.Traj();
-                double min=pigs.get(0).getY();
-                int minid=0;
+            Point TargetPoint;
+            if (!pigs.isEmpty()) {
 
-      //
-      //    System.out.println(pigs.size()+" pig size "+pigs.get(0).getY());
-         // If height of structure is more than width of it then we hitting is done on 3/4 of the pig..!!
-                if(flag==1)
-                {
-                    int mid=(pigs.size()*3)/4;
-                    minid=mid;
-                }
-                else {
+                Deciding_Trajectory DT = new Deciding_Trajectory();
+
+                int flag = DT.Traj();
+                double min = pigs.get(0).getY();
+                int minid = 0;
+
+                //
+                //    System.out.println(pigs.size()+" pig size "+pigs.get(0).getY());
+                // If height of structure is more than width of it then we hitting is done on 3/4 of the pig..!!
+                if (flag == 1) {
+                    System.out.println("------------Height is greater--------------");
+                    int mid = (pigs.size() * 3) / 4;
+                    minid = mid;
+                    TargetPoint=DT.Penetration(minid);
+                    if(TargetPoint.getX()==0 && TargetPoint.getY()==0)
+                    {
+                        ABObject pig = pigs.get(minid);
+                        TargetPoint=pig.getCenter();
+                    }
+                    else
+                    {   ABObject pig = pigs.get(minid);
+                        TargetPoint=pig.getCenter();
+                    }
+
+                } else {// flag==2 vicevera
+                    System.out.println("------------------Width is greater--------------");
                     for (int i = 1; i < pigs.size(); i++) {
                         if (pigs.get(i).getY() < min) {
                             min = pigs.get(i).getY();
                             minid = i;
-                        }
+                            }
                     }
+                    TargetPoint=DT.Penetration(minid);
+                    if(TargetPoint.getX()==0 && TargetPoint.getY()==0) {
+                        ABObject pig = pigs.get(minid);
+                        TargetPoint = pig.getCenter();
+                    }
+                    else
+                    {   ABObject pig = pigs.get(minid);
+                        TargetPoint=pig.getCenter();
+                    }
+
                 }
-                for(int i=0;i<pigs.size();i++) {
-                    p=pigs.get(i);
-//                    System.out.println(p+" ------y-------     "+ p.getY()+" --------x---------- "+p.getX());
-                }
-
-                Point releasePoint = null;
-				Shot shot = new Shot();
-				int dx,dy;
-				{
-					// random pick up a pigrandomGenerator.nextInt(pigs.size())
-					ABObject pig = pigs.get(minid);
-					
-					Point _tpt = pig.getCenter();// if the target is very close to before, randomly choose a
-					// point near it
-					if (prevTarget != null && distance(prevTarget, _tpt) < 10) {
-						double _angle = randomGenerator.nextDouble() * Math.PI * 2;
-						_tpt.x = _tpt.x + (int) (Math.cos(_angle) * 10);
-						_tpt.y = _tpt.y + (int) (Math.sin(_angle) * 10);
-						System.out.println("Randomly changing to " + _tpt);
-					}
-
-					prevTarget = new Point(_tpt.x, _tpt.y);
-
-					// estimate the trajectory
-					ArrayList<Point> pts = tp.estimateLaunchPoint(sling, _tpt);
-					for(int i=0;i<pts.size();i++)
+                    Point releasePoint = null;
+                    Shot shot = new Shot();
+                    int dx, dy;
                     {
-                        System.out.println( pts.get(i)+" points " +i);
-                    }
-					// do a high shot when entering a level to find an accurate velocity
-					if (flag==2 && pts.size()>1) //if width is greater than the height of the structure then heighest trajectory will be used
-					{
-						releasePoint = pts.get(1);
-					}
-					else if (flag==1)  // if height is greater than the width than lowest trajcetory will be used..!!
-						releasePoint = pts.get(0);
+                        // random pick up a pigrandomGenerator.nextInt(pigs.size())
+
+                        Point _tpt = TargetPoint;// if the target is very close to before, randomly choose a
+
+                        // point near it
+                        if (prevTarget != null && distance(prevTarget, _tpt) < 10) {
+                            double _angle = randomGenerator.nextDouble() * Math.PI * 2;
+                            _tpt.x = _tpt.x + (int) (Math.cos(_angle) * 10);
+                            _tpt.y = _tpt.y + (int) (Math.sin(_angle) * 10);
+                            System.out.println("Randomly changing to " + _tpt);
+                        }
+
+                        prevTarget = new Point(_tpt.x, _tpt.y);
+
+                        // estimate the trajectory
+                        ArrayList<Point> pts = tp.estimateLaunchPoint(sling, _tpt);
+                        for (int i = 0; i < pts.size(); i++) {
+                            System.out.println(pts.get(i) + " points " + i);
+                        }
+                        // do a high shot when entering a level to find an accurate velocity
+                        if (flag == 2 && pts.size() > 1) //if width is greater than the height of the structure then heighest trajectory will be used
+                        {
+                            releasePoint = pts.get(1);
+                        } else if (flag == 1)  // if height is greater than the width than lowest trajcetory will be used..!!
+                            releasePoint = pts.get(0);
 				/*	else if (pts.size() == 2)
 					{
 						// randomly choose between the trajectories, with a 1 in
@@ -243,92 +264,89 @@ public class NaiveAgent implements Runnable {
 						else
 							releasePoint = pts.get(0);
 					}*/
-					else
-						if(pts.isEmpty())
-						{
-							System.out.println("No release point found for the target");
-							System.out.println("Try a shot with 45 degree");
-							releasePoint = tp.findReleasePoint(sling, Math.PI/4);
-						}
-					
-					// Get the reference point
-					Point refPoint = tp.getReferencePoint(sling);
+                        else if (pts.isEmpty()) {
+                            System.out.println("No release point found for the target");
+                            System.out.println("Try a shot with 45 degree");
+                            releasePoint = tp.findReleasePoint(sling, Math.PI / 4);
+                        }
+
+                        // Get the reference point
+                        Point refPoint = tp.getReferencePoint(sling);
 
 
-					//Calculate the tapping time according the bird type 
-					if (releasePoint != null) {
-						double releaseAngle = tp.getReleaseAngle(sling,
-								releasePoint);
-						System.out.println("Release Point: " + releasePoint);
-						System.out.println("Release Angle: "
-								+ Math.toDegrees(releaseAngle));
-						int tapInterval = 0;
-						switch (aRobot.getBirdTypeOnSling()) 
-						{
+                        //Calculate the tapping time according the bird type
+                        if (releasePoint != null) {
+                            double releaseAngle = tp.getReleaseAngle(sling,
+                                    releasePoint);
+                            System.out.println("Release Point: " + releasePoint);
+                            System.out.println("Release Angle: "
+                                    + Math.toDegrees(releaseAngle));
+                            int tapInterval = 0;
+                            switch (aRobot.getBirdTypeOnSling()) {
 
-						case RedBird:
-							tapInterval = 0; break;               // start of trajectory
-						case YellowBird:
-							tapInterval = 65 + randomGenerator.nextInt(25);break; // 65-90% of the way
-						case WhiteBird:
-							tapInterval =  70 + randomGenerator.nextInt(20);break; // 70-90% of the way
-						case BlackBird:
-							tapInterval =  70 + randomGenerator.nextInt(20);break; // 70-90% of the way
-						case BlueBird:
-							tapInterval =  65 + randomGenerator.nextInt(20);break; // 65-85% of the way
-						default:
-							tapInterval =  60;
-						}
+                                case RedBird:
+                                    tapInterval = 0;
+                                    break;               // start of trajectory
+                                case YellowBird:
+                                    tapInterval = 65 + randomGenerator.nextInt(25);
+                                    break; // 65-90% of the way
+                                case WhiteBird:
+                                    tapInterval = 70 + randomGenerator.nextInt(20);
+                                    break; // 70-90% of the way
+                                case BlackBird:
+                                    tapInterval = 70 + randomGenerator.nextInt(20);
+                                    break; // 70-90% of the way
+                                case BlueBird:
+                                    tapInterval = 65 + randomGenerator.nextInt(20);
+                                    break; // 65-85% of the way
+                                default:
+                                    tapInterval = 60;
+                            }
 
-						int tapTime = tp.getTapTime(sling, releasePoint, _tpt, tapInterval);
-						dx = (int)releasePoint.getX() - refPoint.x;
-						dy = (int)releasePoint.getY() - refPoint.y;
-						shot = new Shot(refPoint.x, refPoint.y, dx, dy, 0, tapTime);
-					}
-					else
-						{
-							System.err.println("No Release Point Found");
-							return state;
-						}
-				}
+                            int tapTime = tp.getTapTime(sling, releasePoint, _tpt, tapInterval);
+                            dx = (int) releasePoint.getX() - refPoint.x;
+                            dy = (int) releasePoint.getY() - refPoint.y;
+                            shot = new Shot(refPoint.x, refPoint.y, dx, dy, 0, tapTime);
+                        } else {
+                            System.err.println("No Release Point Found");
+                            return state;
+                        }
+                    }
 
-				// check whether the slingshot is changed. the change of the slingshot indicates a change in the scale.
-				{
-					ActionRobot.fullyZoomOut();
-					screenshot = ActionRobot.doScreenShot();
-					vision = new Vision(screenshot);
-					Rectangle _sling = vision.findSlingshotMBR();
-					if(_sling != null)
-					{
-						double scale_diff = Math.pow((sling.width - _sling.width),2) +  Math.pow((sling.height - _sling.height),2);
-						if(scale_diff < 25)
-						{
-							if(dx < 0)
-							{
-								aRobot.cshoot(shot);
-								state = aRobot.getState();
-								if ( state == GameState.PLAYING )
-								{
-									screenshot = ActionRobot.doScreenShot();
-									vision = new Vision(screenshot);
-									List<Point> traj = vision.findTrajPoints();
-									tp.adjustTrajectory(traj, sling, releasePoint);
-									firstShot = false;
-								}
-							}
-						}
-						else
-							System.out.println("Scale is changed, can not execute the shot, will re-segement the image");
-					}
-					else
-						System.out.println("no sling detected, can not execute the shot, will re-segement the image");
-				}
+                    // check whether the slingshot is changed. the change of the slingshot indicates a change in the scale.
+                    {
+                        ActionRobot.fullyZoomOut();
+                        screenshot = ActionRobot.doScreenShot();
+                        vision = new Vision(screenshot);
+                        Rectangle _sling = vision.findSlingshotMBR();
+                        if (_sling != null) {
+                            double scale_diff = Math.pow((sling.width - _sling.width), 2) + Math.pow((sling.height - _sling.height), 2);
+                            if (scale_diff < 25) {
+                                if (dx < 0) {
+                                    aRobot.cshoot(shot);
+                                    state = aRobot.getState();
+                                    if (state == GameState.PLAYING) {
+                                        screenshot = ActionRobot.doScreenShot();
+                                        vision = new Vision(screenshot);
+                                        List<Point> traj = vision.findTrajPoints();
+                                        tp.adjustTrajectory(traj, sling, releasePoint);
+                                        firstShot = false;
+                                    }
+                                }
+                            } else
+                                System.out.println("Scale is changed, can not execute the shot, will re-segement the image");
+                        } else
+                            System.out.println("no sling detected, can not execute the shot, will re-segement the image");
+                    }
 
-			}
+                }
 
-		}
-		return state;
-	}
+            }
+
+        return state;
+
+    }
+
 
 	public static void main(String args[]) {
 

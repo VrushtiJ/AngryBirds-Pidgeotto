@@ -2,31 +2,34 @@ package ab.demo;
 
 import ab.vision.ABObject;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import ab.demo.other.ActionRobot;
+import ab.vision.ABType;
 import ab.vision.Vision;
-
+import java.awt.geom.Line2D;
+import java.awt.Rectangle;
 /**
  * Created by admin on 10/10/2014.
  */
 public class Deciding_Trajectory {
 
+    BufferedImage screenshot = ActionRobot.doScreenShot();
+    Vision vision = new Vision(screenshot);
+
     public int Traj() {
         int flag=0;
-        BufferedImage screenshot = ActionRobot.doScreenShot();
-        Vision vision = new Vision(screenshot);
         //Structure
-        List<ABObject> Pigs = vision.findPigsMBR();
+        List<ABObject> Blocks = vision.findBlocksMBR();
         List<ABObject> Hills = vision.findHills();
         List<ABObject> TNTs = vision.findTNTs();
-        List<ABObject> Blocks = vision.findBlocksMBR();
         //Birds
-        List<ABObject> Birds = vision.findBirdsMBR();
+        List<ABObject> Pigs = vision.findPigsMBR();
+
         //Trajetory Pts
-        List<Point> Traj_Pts = vision.findTrajPoints();
 
         //starting of structure and ending of structure
         double first_PigX=0,last_PigX=0,first_HillX=0,last_HillX=0,first_TNTX=0,last_TNTX=0,first_BlockX=0,last_BlockX=0;
@@ -38,6 +41,8 @@ public class Deciding_Trajectory {
                 last_PigX = point_list[point_list.length - 1];
             }
         }
+        double pigw=last_PigX-first_PigX;
+       // System.out.println(pigw+"  pigw  ");
         /*if(Hills!=null) {
             System.out.println("Hills");
             point_list = sortedListX(Hills);
@@ -66,7 +71,7 @@ public class Deciding_Trajectory {
         minX=FindMin(first_BlockX,first_TNTX,first_PigX);
         maxX=FindMax(last_BlockX,last_TNTX,last_PigX);
         width=maxX-minX;
-        System.out.println(width+" width");
+       // System.out.println(width+" width");
 
         //finding maximum and minimum Y of structure
         double first_PigY=0,last_PigY=0,first_HillY=0,last_HillY=0,first_TNTY=0,last_TNTY=0,first_BlockY=0,last_BlockY=0;
@@ -78,6 +83,9 @@ public class Deciding_Trajectory {
                 last_PigY = point_list[point_list.length - 1];
             }
         }
+        double pigH=last_PigY-first_PigY;
+
+       // System.out.println(pigH+"  pigH  ");
         /*if(Hills!=null) {
             System.out.println("Hills");
             point_list = sortedListX(Hills);
@@ -106,23 +114,17 @@ public class Deciding_Trajectory {
         minY=FindMin(first_BlockY,first_TNTY,first_PigY);
         maxY=FindMax(last_BlockY,last_TNTY,last_PigY);
         Height=maxY-minY;
-        System.out.println(Height+" Height");
-        if(Height>width)
-        {
-            flag=1;
-        }
-        else
+        //System.out.println(Height+" Height");
+        if(2*Height<width)
         {
             flag=2;
         }
+        else
+        {
+            flag=1;
+        }
         return flag;
     }
-
-
-
-
-
-
     public double[] sortedListX(List<ABObject> Objects)
     {
         double[] point_list=new double[Objects.size()];
@@ -180,5 +182,47 @@ public class Deciding_Trajectory {
             maxX=first_BlockX;
         }
         return maxX;
+    }
+
+
+
+    public Point Penetration(int index)
+    {
+        List<ABObject> Blocks = vision.findBlocksMBR();
+        List<ABObject> Birds = vision.findBirdsMBR();
+        List<ABObject> Pigs = vision.findPigsMBR();
+        Rectangle sling=vision.findSlingshotMBR();
+        ArrayList<ABObject> Line_Blocks=new ArrayList<ABObject>();
+
+            System.out.println(" sling " + sling.getLocation());
+            ABObject ab=Pigs.get(index);
+            Line2D line=new Line2D.Double(sling.getCenterX(),sling.getCenterY(),ab.getCenterX(),ab.getCenterY());
+            System.out.println(line.getP1()+"  ----------line------  "+line.getP2()+"  "+line.getBounds());
+            for(ABObject bl:Blocks)
+            {
+              //  System.out.println(bl.getCenterX()+"  print "+bl.getCenterY()+" type "+ bl.getType()+" "+bl.getHeight()+" "+bl.getWidth());
+                if(line.intersects(bl))
+                {
+         //           System.out.println("********in********  "+bl.getCenter()+" "+bl.getHeight()+" "+bl.getWidth()+" "+bl.getType());
+                    Line_Blocks.add(bl);
+                }
+            }
+        //System.out.println(index+" index "+ ab.getCenter());
+        int o=0;
+        Point po=new Point(0,0);
+        //System.out.println(po.getLocation()+" "+ Line_Blocks.size()+" ++++++line size+++++");
+        for(ABObject lb:Line_Blocks)
+        {
+          //  System.out.println("Blocks in between " +lb.getCenter()+" "+o);
+            po=lb.getCenter();
+            o++;
+        }
+        if(Line_Blocks.size()!=0)
+        {
+            return Line_Blocks.get(0).getCenter();
+        }
+        else {
+            return po;
+        }
     }
 }

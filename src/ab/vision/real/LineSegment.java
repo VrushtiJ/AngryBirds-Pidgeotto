@@ -173,3 +173,4 @@ public class LineSegment {
         _end = _prevEnd;
     }
 }
+
