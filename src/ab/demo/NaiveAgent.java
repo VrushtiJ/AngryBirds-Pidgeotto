@@ -49,7 +49,7 @@ public class NaiveAgent implements Runnable {
 
 	}
 
-	
+	int flag=0;
 	// run the client
 	public void run() {
 
@@ -60,7 +60,9 @@ public class NaiveAgent implements Runnable {
 			GameState state = solve();
 
 			if (state == GameState.WON) {
-				try {
+			    flag=0;
+                System.out.println("game won"+flag);
+					try {
 					Thread.sleep(3000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
@@ -89,6 +91,9 @@ public class NaiveAgent implements Runnable {
 				firstShot = true;
 			} else if (state == GameState.LOST) {
 				System.out.println("Restart");
+                flag=1;
+                System.out.println("game lost restart ***********"+flag);
+
 				aRobot.restartLevel();
 			} else if (state == GameState.LEVEL_SELECTION) {
 				System.out
@@ -152,7 +157,7 @@ public class NaiveAgent implements Runnable {
 
 			if (!pigs.isEmpty() && !birds.isEmpty()) {
                 Heuristic h=new Heuristic();
-                Point he=h.target_pt();
+                Point he=h.target_pt(flag);
                 System.out.println(he.getX()+">>S>>>>>>>>>>>>>>. location <<<<<<<<<<<<<<<<<<<"+he.getY());
                 int f=0;
                 Line2D line=new Line2D.Double(sling.getCenterX(),sling.getCenterY(),pigs.get(pigs.size()-1).getCenterX(),pigs.get(pigs.size()-1).getCenterY());

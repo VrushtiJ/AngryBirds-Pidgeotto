@@ -27,7 +27,7 @@ public class Heuristic {
     BufferedImage screenshot = ActionRobot.doScreenShot();
     Vision vsn = new Vision(screenshot);
     VisionMBR vision=new VisionMBR(screenshot);
-    public Point target_pt() {
+    public Point target_pt(int flag) {
         List<ABObject> blocks = vision.findBlocks();
         List<ABObject> pigs = vision.findPigs();
         List<ABObject> tnts = vision.findTNTs();
@@ -46,6 +46,16 @@ public class Heuristic {
         birds.addAll(blackBirds);
         birds.addAll(whiteBirds);
 
+        int pin=0;
+        if(flag==1)
+        {
+            System.out.println("flag in &&&&&&&&&&&&&&&&&&&&&"+flag);
+            pin=1;
+        }
+        else
+        {
+            pin=pigs.size();
+        }
         int i = 0, num_of_pigs = pigs.size(), index = 0, maxH_blks_bforePigs = 0;
         double maxH = 0;
         Point pt = new Point(0, 0);
@@ -53,7 +63,7 @@ public class Heuristic {
         if (pigs.size() == 1) {
             pt = pigs.get(0).getCenter();
         } else {
-            ABObject p = pigs.get(pigs.size() - 1);
+            ABObject p = pigs.get(pin - 1);
             i = 0;
             maxH = 0;
             maxH_blks_bforePigs = 0;
@@ -85,47 +95,49 @@ public class Heuristic {
                 for (ABObject b : blocks) {
                     f = 0;
                     if (b.getHeight() == maxH) {
-                        switch (BD.getType()) {
+                        if(BD!=null) {
+                            switch (BD.getType()) {
 
-                            case RedBird:
-                                if (b.getType().compareTo(ABType.Stone) == 0||b.getType().compareTo(ABType.Ice) == 0||b.getType().compareTo(ABType.Wood) == 0) {
+                                case RedBird:
+                                    if (b.getType().compareTo(ABType.Stone) == 0 || b.getType().compareTo(ABType.Ice) == 0 || b.getType().compareTo(ABType.Wood) == 0) {
+                                        index = j;
+                                        f = 1;
+                                    }
+                                    break;
+
+
+                                case BlueBird:
+                                    if (b.getType().compareTo(ABType.Ice) == 0) {
+                                        index = j;
+                                        f = 1;
+                                    }
+                                    break;
+
+                                case YellowBird:
+                                    if (b.getType().compareTo(ABType.Wood) == 0) {
+                                        index = j;
+                                        f = 1;
+                                    }
+                                    break;
+
+                                case BlackBird:
+                                    if (b.getType().compareTo(ABType.Stone) == 0 || b.getType().compareTo(ABType.Wood) == 0 || b.getType().compareTo(ABType.Ice) == 0) {
+                                        index = j;
+                                        f = 1;
+                                    }
+                                    break;
+
+                                case WhiteBird:
+                                    if (b.getType().compareTo(ABType.Stone) == 0 || b.getType().compareTo(ABType.Wood) == 0 || b.getType().compareTo(ABType.Ice) == 0) {
+                                        index = j;
+                                        f = 1;
+                                    }
+                                    break;
+
+
+                                default:
                                     index = j;
-                                    f = 1;
-                                }
-                                break;
-
-
-                            case BlueBird:
-                                if (b.getType().compareTo(ABType.Ice) == 0) {
-                                    index = j;
-                                    f = 1;
-                                }
-                                break;
-
-                            case YellowBird:
-                                if (b.getType().compareTo(ABType.Wood) == 0) {
-                                    index = j;
-                                    f = 1;
-                                }
-                                break;
-
-                            case BlackBird:
-                                if (b.getType().compareTo(ABType.Stone) == 0 || b.getType().compareTo(ABType.Wood) == 0 || b.getType().compareTo(ABType.Ice) == 0) {
-                                    index = j;
-                                    f = 1;
-                                }
-                                break;
-
-                            case WhiteBird:
-                                if (b.getType().compareTo(ABType.Stone) == 0 || b.getType().compareTo(ABType.Wood) == 0 || b.getType().compareTo(ABType.Ice) == 0) {
-                                    index = j;
-                                    f = 1;
-                                }
-                                break;
-
-
-                            default:
-                                index = j;
+                            }
                         }
                         if (f == 1) {
                             break;
@@ -166,7 +178,7 @@ public class Heuristic {
             // pt=blocks.get(index).getCenter();
             ABObject bl = blocks.get(index);
             int f2 = 0, h2 = 0;
-            double cover = bl.getX() + bl.getHeight();
+            double cover = bl.getX() + bl.getHeight(), distY=0, minY=100;
             /*if (p.getX() < cover) {
                 System.out.println("block can cover pig.. ^^^^^^^^ ");
                 pt = bl.getCenter();
@@ -178,8 +190,10 @@ public class Heuristic {
                 int l = 0;
                 for (ABObject b : blocks) {
                     dist = p.getX() - b.getX();
-                    if (dist > 0 && dist < min) {
+                    distY=b.getY()-p.getY();
+                    if (dist > 0 && dist < min && p.getY()>=b.getY() && distY>0 && distY<minY) {
                         min = dist;
+                        minY=distY;
                         index = l;
                         f2 = 1;
                     }
