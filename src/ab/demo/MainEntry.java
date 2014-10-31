@@ -9,50 +9,38 @@ import ab.vision.ShowSeg;
  ** Copyright (c) 2014, XiaoYu (Gary) Ge, Jochen Renz,Stephen Gould,
  **  Sahan Abeyasinghe,Jim Keys,  Andrew Wang, Peng Zhang
  ** All rights reserved.
- **This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License. 
- **To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/ 
- *or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.
+**This work is licensed under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+**To view a copy of this license, visit http://www.gnu.org/licenses/
  *****************************************************************************/
 
 public class MainEntry {
 	// the entry of the software.
-     static int count=0;
 	public static void main(String args[])
 	{
 		String command = "";
 		if(args.length > 0)
 		{
-            count++;
-            System.out.println(count+" count");
-            command = args[0];
+			command = args[0];
 			if (args.length == 1 && command.equalsIgnoreCase("-na"))
 			{
-                System.out.println(count+" count1");
-
-                NaiveAgent na = new NaiveAgent();
+				NaiveAgent na = new NaiveAgent();
 				na.run();
 			}
 			else
 				if(command.equalsIgnoreCase("-cshoot"))
 				{
-                    System.out.println(count+" count2");
-
-                    ShootingAgent.shoot(args, true);
+					ShootingAgent.shoot(args, true);
 				}
 				else
 					if(command.equalsIgnoreCase("-pshoot"))
 					{
-                        System.out.println(count+" count3");
-
-                        ShootingAgent.shoot(args, false);
+						ShootingAgent.shoot(args, false);
 					}
 
 					else	
 						if (args.length == 1 && command.equalsIgnoreCase("-nasc"))
 						{
-                            System.out.println(count+" count4");
-
-                            ClientNaiveAgent na = new ClientNaiveAgent();
+							ClientNaiveAgent na = new ClientNaiveAgent();
 							na.run();
 						} 
 						else 
@@ -98,9 +86,7 @@ public class MainEntry {
 						} 
 						else if (args.length == 3 && (args[2].equalsIgnoreCase("-showMBR") || args[2].equalsIgnoreCase("-showReal")) && command.equalsIgnoreCase("-na"))
 						{
-                            System.out.println(count+" count5");
-
-                            NaiveAgent na = new NaiveAgent();
+							NaiveAgent na = new NaiveAgent();
 							int initialLevel = 1;
 							try{
 								initialLevel = Integer.parseInt(args[1]);
