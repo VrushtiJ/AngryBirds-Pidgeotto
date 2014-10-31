@@ -190,10 +190,9 @@ public class Heuristic {
                 int l = 0;
                 for (ABObject b : blocks) {
                     dist = p.getX() - b.getX();
-                    distY=b.getY()-p.getY();
-                    if (dist > 0 && dist < min && p.getY()>=b.getY() && distY>0 && distY<minY) {
+                 //   distY=b.getY()-p.getY();
+                    if (dist > 0 && dist < min) {
                         min = dist;
-                        minY=distY;
                         index = l;
                         f2 = 1;
                     }
